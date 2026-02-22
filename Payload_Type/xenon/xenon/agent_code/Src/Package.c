@@ -875,6 +875,9 @@ BOOL PackageSendAll(PPARSER response)
 #ifdef TCP_TRANSPORT
     #define MAX_PACKAGE_SIZE (PIPE_BUFFER_MAX * 3 / 4)     // ~48 KB
 #endif
+#ifdef TURNC2_TRANSPORT
+    #define MAX_PACKAGE_SIZE (MAX_REQUEST_LENGTH * 3 / 4)  // ~2.25MB (same as HTTPX)
+#endif
 
     _dbg("Sending All Queued Packages to Server ...");
 

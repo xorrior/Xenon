@@ -134,6 +134,24 @@ VOID XenonConfigure()
 
 #endif
 
+#ifdef TURNC2_TRANSPORT
+
+    SIZE_T signalUrlLen = 0, signalUriLen = 0;
+    SIZE_T turnServerLen = 0, turnUserLen = 0, turnPassLen = 0;
+    SIZE_T sdpOfferLen = 0;
+
+    xenonConfig->signalUrl     = ParserStringCopy(&ParserConfig, &signalUrlLen);           // allocates
+    xenonConfig->signalPort    = ParserGetInt32(&ParserConfig);
+    xenonConfig->signalUri     = ParserStringCopy(&ParserConfig, &signalUriLen);            // allocates
+    xenonConfig->signalSSL     = ParserGetByte(&ParserConfig);
+    xenonConfig->turnServer    = ParserStringCopy(&ParserConfig, &turnServerLen);           // allocates
+    xenonConfig->turnUsername  = ParserStringCopy(&ParserConfig, &turnUserLen);             // allocates
+    xenonConfig->turnPassword  = ParserStringCopy(&ParserConfig, &turnPassLen);             // allocates
+    xenonConfig->sdpOffer      = ParserStringCopy(&ParserConfig, &sdpOfferLen);             // allocates
+    xenonConfig->offerId       = NULL;  // extracted at runtime from sdpOffer
+
+#endif
+
     // DEBUG Print Values
     _dbg("AGENT CONFIGURATION VALUES: \n");
 
@@ -166,7 +184,19 @@ VOID XenonConfigure()
     _dbg("[TcpId]           = [%x]", xenonConfig->TcpId);
     _dbg("[TcpBindAddress]  = %s", xenonConfig->TcpBindAddress);
     _dbg("[TcpPort]         = %d", xenonConfig->TcpPort);
-    
+
+#endif
+
+#ifdef TURNC2_TRANSPORT
+
+    _dbg("[SignalUrl]        = %s", xenonConfig->signalUrl);
+    _dbg("[SignalPort]       = %d", xenonConfig->signalPort);
+    _dbg("[SignalUri]        = %s", xenonConfig->signalUri);
+    _dbg("[SignalSSL]        = %s", xenonConfig->signalSSL ? "TRUE" : "FALSE");
+    _dbg("[TurnServer]       = %s", xenonConfig->turnServer);
+    _dbg("[TurnUsername]     = %s", xenonConfig->turnUsername);
+    _dbg("[SdpOffer]         = %.50s...", xenonConfig->sdpOffer);
+
 #endif
 
 }

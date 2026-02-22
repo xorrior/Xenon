@@ -20,7 +20,7 @@ class XenonAgent(PayloadType):
     wrapped_payloads = []
     note = """A Cobalt Strike-like agent for Windows targets. Version: v0.0.4"""
     supports_dynamic_loading = True
-    c2_profiles = ["httpx", "smb", "tcp"]
+    c2_profiles = ["httpx", "smb", "tcp", "turnc2"]
     mythic_encrypts = True
     translation_container = "XenonTranslator"
     build_parameters = [
@@ -314,11 +314,60 @@ class XenonAgent(PayloadType):
             if selected_profile == 'smb':
                 serialized_data += serialize_int(random.getrandbits(32))                            # Random P2P ID
                 serialized_data += serialize_string(f"\\\\.\\pipe\\{Config['pipename']}")           # \\.\pipe\<string>
-            # SMB Specific
+            # TCP Specific
             if selected_profile == 'tcp':
                 serialized_data += serialize_int(random.getrandbits(32))                   # Random P2P ID
                 serialized_data += serialize_string("0.0.0.0")                             # 0.0.0.0
                 serialized_data += serialize_int(int(Config["port"]))                      # 50005
+
+            # TURNC2 Specific
+            if selected_profile == 'turnc2':
+                # Parse callback_host for hostname and SSL
+                callback_host = Config.get("callback_host", "")
+                if callback_host.startswith("https://"):
+                    signal_ssl = True
+                    signal_hostname = callback_host[len("https://"):]
+                elif callback_host.startswith("http://"):
+                    signal_ssl = False
+                    signal_hostname = callback_host[len("http://"):]
+                else:
+                    signal_ssl = False
+                    signal_hostname = callback_host
+
+                # Remove trailing slash/port from hostname
+                signal_hostname = signal_hostname.rstrip("/").split(":")[0]
+
+                callback_port = int(Config.get("callback_port", 443))
+                signal_uri = Config.get("signal_uri", "/api/v1/session")
+                turn_server = Config.get("turn_server", "")
+                turn_username = Config.get("turn_username", "")
+                turn_password = Config.get("turn_password", "")
+                sdp_offer_encoded = Config.get("sdp_offer", "")
+
+                # Decode brotli+base64 SDP offer and re-encode as base64-only
+                # so the C agent doesn't need a brotli decoder
+                import base64
+                try:
+                    import brotli
+                    sdp_offer_compressed = base64.b64decode(sdp_offer_encoded)
+                    sdp_offer_json = brotli.decompress(sdp_offer_compressed)
+                    sdp_offer_b64only = base64.b64encode(sdp_offer_json).decode('utf-8')
+                    logging.info(f"[+] Decoded brotli SDP offer ({len(sdp_offer_json)} bytes JSON)")
+                except ImportError:
+                    logging.warning("[!] brotli module not available, assuming SDP offer is already base64-only")
+                    sdp_offer_b64only = sdp_offer_encoded
+                except Exception as e:
+                    logging.warning(f"[!] Failed to decompress SDP offer ({e}), using raw value")
+                    sdp_offer_b64only = sdp_offer_encoded
+
+                serialized_data += serialize_string(signal_hostname)        # signalUrl
+                serialized_data += serialize_int(callback_port)             # signalPort
+                serialized_data += serialize_string(signal_uri)             # signalUri
+                serialized_data += serialize_bool(signal_ssl)               # signalSSL
+                serialized_data += serialize_string(turn_server)            # turnServer
+                serialized_data += serialize_string(turn_username)          # turnUsername
+                serialized_data += serialize_string(turn_password)          # turnPassword
+                serialized_data += serialize_string(sdp_offer_b64only)      # sdpOffer (base64-only)
                 
 
             # Convert to hex string format for C macro
@@ -329,68 +378,48 @@ class XenonAgent(PayloadType):
             
             with open(agent_build_path.name + "/Include/Config.h", "r+") as f:
                 content = f.read()
-                
+
                 # Set the selected transport profile
-                profile_define_string = f"{selected_profile.upper()}_TRANSPORT"     # HTTPX_TRANSPORT | SMB_TRANSPORT | TCP_TRANSPORT
+                profile_define_string = f"{selected_profile.upper()}_TRANSPORT"     # HTTPX_TRANSPORT | SMB_TRANSPORT | TCP_TRANSPORT | TURNC2_TRANSPORT
                 content = content.replace("%C2_PROFILE%", profile_define_string)
 
                 # Stamp in hex byte array
-                content = content.replace("%S_AGENT_CONFIG%", general_config_hex)              
-                
-                # Write the updated content back to the file
-                f.seek(0)
-                f.write(content)
-                f.truncate()
-                
-            
-            # HTTPX Specific 
-            if selected_profile == 'httpx':
-                ##############################
-                #####     User-Agent      ####
-                ##############################
-                with open(agent_build_path.name + "/Include/Config.h", "r+") as f:
-                    content = f.read()
+                content = content.replace("%S_AGENT_CONFIG%", general_config_hex)
 
-                    # Replace user agent for GET request (if defined, otherwise use default "Xenon")
+                # Generate transport-specific defines
+                transport_defines = ""
+
+                if selected_profile == 'httpx':
+                    # User-Agent defines
                     get_user_agent = Config["raw_c2_config"]["get"]["client"]["headers"].get("User-Agent", "Xenon")
-                    content = content.replace("%S_GET_USERAGENT%", get_user_agent)
-
-                    # Replace user agent for POST request (if defined, otherwise use default "Xenon")
                     post_user_agent = Config["raw_c2_config"]["post"]["client"]["headers"].get("User-Agent", "Xenon")
-                    content = content.replace("%S_POST_USERAGENT%", post_user_agent)
+                    transport_defines += f'#define S_GET_USERAGENT     "{get_user_agent}"\n'
+                    transport_defines += f'#define S_POST_USERAGENT    "{post_user_agent}"\n'
 
-                    
-                    # Write the updated content back to the file
-                    f.seek(0)
-                    f.write(content)
-                    f.truncate()
-
-
-                #############################################################################
-                #####     HTTP(X) request profiles ( in [Type, Size, Data] format)       ####
-                #############################################################################
-                
-                with open(agent_build_path.name + "/Include/Config.h", "r+") as f:
-                    content = f.read()
-
-                    # Generate byte arrays for the malleable C2 profiles
+                    # Malleable C2 profiles
                     get_client, post_client, get_server, post_server = generate_raw_c2_transform_definitions(Config["raw_c2_config"])
-                    
-                    content = content.replace("%S_C2_GET_CLIENT%", get_client)
-                    content = content.replace("%S_C2_POST_CLIENT%", post_client)
-                    content = content.replace("%S_C2_GET_SERVER%", get_server)
-                    content = content.replace("%S_C2_POST_SERVER%", post_server)
-                    
+                    transport_defines += f'#define S_C2_GET_CLIENT     "{get_client}"\n'
+                    transport_defines += f'#define S_C2_POST_CLIENT    "{post_client}"\n'
+                    transport_defines += f'#define S_C2_GET_SERVER     "{get_server}"\n'
+                    transport_defines += f'#define S_C2_POST_SERVER    "{post_server}"\n'
+
                     logging.info("Malleable C2 Profiles: \n")
                     logging.info(f'#define S_C2_GET_CLIENT "{get_client}"')
                     logging.info(f'#define S_C2_POST_CLIENT "{post_client}"')
                     logging.info(f'#define S_C2_GET_SERVER "{get_server}"')
                     logging.info(f'#define S_C2_POST_SERVER "{post_server}"')
-                    
-                    # Write the updated content back to the file
-                    f.seek(0)
-                    f.write(content)
-                    f.truncate()
+
+                elif selected_profile == 'turnc2':
+                    # TURNC2 needs no extra defines — config is in the binary blob
+                    transport_defines += "/* TURNC2 transport — no extra defines needed */\n"
+
+                # For SMB/TCP, no extra defines needed either
+                content = content.replace("%S_TRANSPORT_DEFINES%", transport_defines)
+
+                # Write the updated content back to the file
+                f.seek(0)
+                f.write(content)
+                f.truncate()
 
 
             ######################################
@@ -489,7 +518,14 @@ class XenonAgent(PayloadType):
                     command = "make shellcode"
                     output_path = f"{agent_build_path.name}/artifact_x64.sc.dll"
             
-            
+            # Append TURN-specific linker flags if turnc2 profile
+            if selected_profile == 'turnc2':
+                turn_lflags = "EXTRA_LFLAGS='-L/opt/libdatachannel/lib -ldatachannel-static -ljuice-static -lusrsctp-static -lssl -lcrypto -lbcrypt -lcrypt32 -lws2_32 -lstdc++ -lpthread'"
+                command += f" {turn_lflags}"
+                # Also add libdatachannel include path
+                command += " 'CFLAGS=-Wall -w -s -IInclude -I/opt/libdatachannel/include'"
+                logging.info(f"[+] TURNC2 build command: {command}")
+
             # Make command
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=agent_build_path.name)
             stdout, stderr = await proc.communicate()

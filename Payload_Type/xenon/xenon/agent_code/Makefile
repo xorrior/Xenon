@@ -1,8 +1,11 @@
 # Compiler
 CC = x86_64-w64-mingw32-gcc
 CFLAGS = -Wall -w -s -IInclude
-LFLAGS = -liphlpapi -lnetapi32 -lwininet -lws2_32 
+LFLAGS = -liphlpapi -lnetapi32 -lwininet -lws2_32
 DFLAGS = -D_DEBUG
+
+# Extra linker flags passed by builder (e.g., TURN libraries)
+EXTRA_LFLAGS ?=
 
 # Directories
 SRC_FILES := Src/*.c Src/Tasks/*.c
@@ -26,24 +29,24 @@ debug_shellcode: artifact_x64-debug.sc.dll
 
 # Executable Target
 artifact_x64.exe: $(SRC_FILES)
-	$(CC) $^ -o $@ $(CFLAGS) -D_EXE $(LFLAGS) -mwindows
+	$(CC) $^ -o $@ $(CFLAGS) -D_EXE $(LFLAGS) $(EXTRA_LFLAGS) -mwindows
 
 artifact_x64-debug.exe: $(SRC_FILES)
-	$(CC) $^ -o $@ $(CFLAGS) -D_EXE $(LFLAGS) $(DFLAGS)
+	$(CC) $^ -o $@ $(CFLAGS) -D_EXE $(LFLAGS) $(EXTRA_LFLAGS) $(DFLAGS)
 
 # DLL Target
 artifact_x64.dll: $(SRC_FILES)
-	$(CC) $^ -o $@ -shared -D_DLL $(CFLAGS) $(LFLAGS)
+	$(CC) $^ -o $@ -shared -D_DLL $(CFLAGS) $(LFLAGS) $(EXTRA_LFLAGS)
 
 artifact_x64-debug.dll: $(SRC_FILES)
-	$(CC) $^ -o $@ -shared -D_DLL $(CFLAGS) $(LFLAGS) $(DFLAGS)
+	$(CC) $^ -o $@ -shared -D_DLL $(CFLAGS) $(LFLAGS) $(EXTRA_LFLAGS) $(DFLAGS)
 
 # Shellcode (DLL)
 artifact_x64.sc.dll: $(SRC_FILES)
-	$(CC) $^ -o $@ -shared -D_SHELLCODE $(CFLAGS) $(LFLAGS)
+	$(CC) $^ -o $@ -shared -D_SHELLCODE $(CFLAGS) $(LFLAGS) $(EXTRA_LFLAGS)
 
 artifact_x64-debug.sc.dll: $(SRC_FILES)
-	$(CC) $^ -o $@ -shared -D_SHELLCODE $(CFLAGS) $(LFLAGS) $(DFLAGS)
+	$(CC) $^ -o $@ -shared -D_SHELLCODE $(CFLAGS) $(LFLAGS) $(EXTRA_LFLAGS) $(DFLAGS)
 
 # Clean up
 clean:

