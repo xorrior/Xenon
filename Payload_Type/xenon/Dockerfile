@@ -68,6 +68,7 @@ RUN printf '%s\n' \
     '' \
     '[properties]' \
     "pkg_config_libdir = ['${MSYS2_PREFIX}/lib/pkgconfig', '/opt/openssl-mingw64/lib/pkgconfig']" \
+    "c_link_args = ['-lcrypt32']" \
     '' \
     '[host_machine]' \
     "system = 'windows'" \
