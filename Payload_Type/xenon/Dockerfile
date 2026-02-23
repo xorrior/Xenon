@@ -62,6 +62,8 @@ RUN cd /opt && \
         -DBUILD_SHARED_LIBS=OFF && \
     cmake --build build -j$(nproc) && \
     cmake --install build && \
+    cp /opt/libdatachannel-src/build/deps/libjuice/libjuice-static.a /opt/libdatachannel/lib/ && \
+    cp /opt/libdatachannel-src/build/deps/usrsctp/usrsctplib/libusrsctp-static.a /opt/libdatachannel/lib/ && \
     rm -rf /opt/libdatachannel-src
 
 WORKDIR /Mythic/
