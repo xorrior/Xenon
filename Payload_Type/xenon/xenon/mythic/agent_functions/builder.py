@@ -520,15 +520,6 @@ class XenonAgent(PayloadType):
             
             # Append TURN-specific linker flags if turnc2 profile
             if selected_profile == 'turnc2':
-                # Debug: list available libraries
-                import subprocess
-                for d in ['/opt/libdatachannel', '/opt/libdatachannel/lib', '/opt/libdatachannel/lib64', '/opt/openssl-mingw64/lib']:
-                    try:
-                        result = subprocess.run(['ls', '-laR', d], capture_output=True, text=True, timeout=5)
-                        logging.error(f"[TURN DEBUG] ls -laR {d}:\n{result.stdout}\n{result.stderr}")
-                    except Exception as e:
-                        logging.error(f"[TURN DEBUG] ls {d} failed: {e}")
-
                 turn_lflags = "EXTRA_LFLAGS='-Wl,--allow-multiple-definition -L/opt/libdatachannel/lib -L/opt/openssl-mingw64/lib -ldatachannel -ljuice -lusrsctp -lssl -lcrypto -lbcrypt -lcrypt32 -liphlpapi -lws2_32 -lstdc++ -lpthread'"
                 command += f" {turn_lflags}"
                 # Also add libdatachannel and OpenSSL include paths
