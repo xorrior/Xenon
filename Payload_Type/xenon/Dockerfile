@@ -27,9 +27,11 @@ RUN python3 -m pip install toml donut-shellcode brotli
 RUN cd /opt && \
     git clone --depth 1 --branch openssl-3.2.0 https://github.com/openssl/openssl.git openssl-src && \
     cd /opt/openssl-src && \
-    ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- --prefix=/opt/openssl-mingw64 --libdir=lib no-shared no-tests no-docs && \
+    ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- --prefix=/opt/openssl-mingw64 --libdir=lib no-shared no-tests no-docs no-capieng && \
     make -j$(nproc) && \
     make install_sw && \
+    # Add -lcrypt32 to pkg-config so downstream consumers (libnice) link it automatically
+    sed -i 's/^Libs.private:.*/& -lcrypt32/' /opt/openssl-mingw64/lib/pkgconfig/libcrypto.pc && \
     rm -rf /opt/openssl-src
 
 # Step 2: Download MSYS2 pre-built packages for glib2 + dependencies
