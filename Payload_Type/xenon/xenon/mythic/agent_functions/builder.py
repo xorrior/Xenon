@@ -532,7 +532,7 @@ class XenonAgent(PayloadType):
                 turn_lflags = "EXTRA_LFLAGS='-L/opt/libdatachannel/lib -L/opt/openssl-mingw64/lib -ldatachannel -ljuice -lusrsctp -lssl -lcrypto -lbcrypt -lcrypt32 -lws2_32 -lstdc++ -lpthread'"
                 command += f" {turn_lflags}"
                 # Also add libdatachannel and OpenSSL include paths
-                command += " 'CFLAGS=-Wall -w -s -IInclude -I/opt/libdatachannel/include -I/opt/openssl-mingw64/include'"
+                command += " 'CFLAGS=-Wall -w -s -DRTC_STATIC -IInclude -I/opt/libdatachannel/include -I/opt/openssl-mingw64/include'"
                 logging.info(f"[+] TURNC2 build command: {command}")
 
             # Make command
