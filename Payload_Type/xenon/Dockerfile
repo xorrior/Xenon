@@ -51,6 +51,8 @@ RUN cd /opt && \
         -DCMAKE_BUILD_TYPE=Release \
         -DNO_MEDIA=ON \
         -DNO_WEBSOCKET=ON \
+        -DNO_TESTS=ON \
+        -DNO_EXAMPLES=ON \
         -DUSE_GNUTLS=OFF \
         -DOPENSSL_ROOT_DIR=/opt/openssl-mingw64 \
         -DOPENSSL_INCLUDE_DIR=/opt/openssl-mingw64/include \
