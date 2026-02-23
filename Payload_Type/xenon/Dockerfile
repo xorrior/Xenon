@@ -49,6 +49,8 @@ RUN mkdir -p ${MSYS2_PREFIX} /tmp/msys2-pkgs && \
     for pkg in *.pkg.tar.zst; do \
         zstdcat "$pkg" | tar xf - -C ${MSYS2_PREFIX} --strip-components=1 2>/dev/null || true; \
     done && \
+    # Fix pkg-config prefix from /mingw64 to actual install path
+    sed -i "s|prefix=/mingw64|prefix=${MSYS2_PREFIX}|g" ${MSYS2_PREFIX}/lib/pkgconfig/*.pc && \
     ls -la ${MSYS2_PREFIX}/lib/pkgconfig/ && \
     rm -rf /tmp/msys2-pkgs
 
@@ -64,7 +66,6 @@ RUN printf '%s\n' \
     '' \
     '[properties]' \
     "pkg_config_libdir = ['${MSYS2_PREFIX}/lib/pkgconfig', '/opt/openssl-mingw64/lib/pkgconfig']" \
-    "sys_root = '/usr/x86_64-w64-mingw32'" \
     '' \
     '[host_machine]' \
     "system = 'windows'" \
