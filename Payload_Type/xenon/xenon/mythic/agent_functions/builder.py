@@ -520,10 +520,10 @@ class XenonAgent(PayloadType):
             
             # Append TURN-specific linker flags if turnc2 profile
             if selected_profile == 'turnc2':
-                turn_lflags = "EXTRA_LFLAGS='-L/opt/libdatachannel/lib -ldatachannel-static -ljuice-static -lusrsctp-static -lssl -lcrypto -lbcrypt -lcrypt32 -lws2_32 -lstdc++ -lpthread'"
+                turn_lflags = "EXTRA_LFLAGS='-L/opt/libdatachannel/lib -L/opt/openssl-mingw64/lib -ldatachannel-static -ljuice-static -lusrsctp-static -lssl -lcrypto -lbcrypt -lcrypt32 -lws2_32 -lstdc++ -lpthread'"
                 command += f" {turn_lflags}"
-                # Also add libdatachannel include path
-                command += " 'CFLAGS=-Wall -w -s -IInclude -I/opt/libdatachannel/include'"
+                # Also add libdatachannel and OpenSSL include paths
+                command += " 'CFLAGS=-Wall -w -s -IInclude -I/opt/libdatachannel/include -I/opt/openssl-mingw64/include'"
                 logging.info(f"[+] TURNC2 build command: {command}")
 
             # Make command
