@@ -8,7 +8,10 @@ RUN apt-get update && apt-get install -y \
     make \
     cmake \
     git \
-    openjdk-11-jdk
+    openjdk-11-jdk && \
+    # Switch MinGW to posix threading model (required for std::mutex in libdatachannel)
+    update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix && \
+    update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
 
 RUN python3 -m pip install toml donut-shellcode brotli
 
