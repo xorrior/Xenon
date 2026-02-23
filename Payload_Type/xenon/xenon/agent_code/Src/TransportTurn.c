@@ -466,6 +466,32 @@ static BOOL TurnDecodeOffer(void) {
 
     _dbg("[TURN] offer_id=%s, offer SDP length=%d", gOfferID, (int)sdpLen);
 
+    /* Extract TURN credentials from ice_servers array if not already set */
+    cJSON* iceServers = cJSON_GetObjectItemCaseSensitive(root, "ice_servers");
+    if (cJSON_IsArray(iceServers) && cJSON_GetArraySize(iceServers) > 0) {
+        cJSON* firstServer = cJSON_GetArrayItem(iceServers, 0);
+        if (firstServer) {
+            cJSON* username = cJSON_GetObjectItemCaseSensitive(firstServer, "username");
+            cJSON* credential = cJSON_GetObjectItemCaseSensitive(firstServer, "credential");
+
+            if (cJSON_IsString(username) && username->valuestring[0] != '\0') {
+                if (xenonConfig->turnUsername) LocalFree(xenonConfig->turnUsername);
+                SIZE_T uLen = strlen(username->valuestring);
+                xenonConfig->turnUsername = (PCHAR)LocalAlloc(LPTR, uLen + 1);
+                strcpy(xenonConfig->turnUsername, username->valuestring);
+                _dbg("[TURN] Extracted TURN username from ice_servers (%d chars)", (int)uLen);
+            }
+
+            if (cJSON_IsString(credential) && credential->valuestring[0] != '\0') {
+                if (xenonConfig->turnPassword) LocalFree(xenonConfig->turnPassword);
+                SIZE_T pLen = strlen(credential->valuestring);
+                xenonConfig->turnPassword = (PCHAR)LocalAlloc(LPTR, pLen + 1);
+                strcpy(xenonConfig->turnPassword, credential->valuestring);
+                _dbg("[TURN] Extracted TURN password from ice_servers (%d chars)", (int)pLen);
+            }
+        }
+    }
+
     cJSON_Delete(root);
     LocalFree(decoded);
     return TRUE;
