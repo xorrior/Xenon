@@ -47,9 +47,8 @@ RUN mkdir -p ${MSYS2_PREFIX} /tmp/msys2-pkgs && \
     curl -LO https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-libiconv-1.17-4-any.pkg.tar.zst && \
     # Extract all packages (files are rooted at mingw64/)
     for pkg in *.pkg.tar.zst; do \
-        zstd -d "$pkg" -o - | tar xf - -C ${MSYS2_PREFIX} --strip-components=1 2>/dev/null || true; \
+        zstdcat "$pkg" | tar xf - -C ${MSYS2_PREFIX} --strip-components=1 2>/dev/null || true; \
     done && \
-    # Create pkg-config wrapper that searches our cross-compiled prefixes
     ls -la ${MSYS2_PREFIX}/lib/pkgconfig/ && \
     rm -rf /tmp/msys2-pkgs
 
