@@ -252,11 +252,14 @@ BOOL ParserDecrypt(_Inout_ PPARSER parser)
         return FALSE;
 
 
-    if ( !ParserBase64Decode(parser) ) 
+    /* TURN transport receives raw bytes; HTTP transports receive base64 */
+#ifndef TURNC2_TRANSPORT
+    if ( !ParserBase64Decode(parser) )
     {
         _err("Failed to base64 decode buffer");
         return FALSE;
     }
+#endif
 
     /* Validate Mythic UUID against Agent */
     MsgUuid = ParserGetString(parser, &IdLen);

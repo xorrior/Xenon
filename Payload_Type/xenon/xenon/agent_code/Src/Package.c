@@ -760,10 +760,13 @@ BOOL PackageSend(PPackage package, PPARSER response)
             return FALSE;
     }
 
+    /* Base64 encode for HTTP transports; TURN uses binary data channel */
+#ifndef TURNC2_TRANSPORT
     if ( !PackageBase64Encode(package) ) {
         _err("Base64 encoding failed");
         return FALSE;
     }
+#endif
 
     _dbg("\n\n===================REQUEST======================\n");
     _dbg("Client -> Server message (length: %d bytes)", package->length);
