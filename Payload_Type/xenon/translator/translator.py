@@ -36,8 +36,8 @@ class XenonTranslator(TranslationContainer):
         mythic_action = inputMsg.Message["action"]
         
         # C2 -> Agent
-        logging.info(f"[{mythic_action}] C2 -> Agent : {len(inputMsg.Message)} bytes")
-        # logging.info(f"[{mythic_action}] C2 -> Agent : {inputMsg.Message} \n\n")
+        logging.info(f"[{mythic_action}] C2 -> Agent : {len(inputMsg.Message)} keys")
+        logging.info(f"[{mythic_action}] C2 -> Agent : {json.dumps(inputMsg.Message, default=str)}")
         
         if mythic_action == "checkin":
             main_msg = checkin_to_agent_format(inputMsg.Message["id"])
@@ -74,7 +74,6 @@ class XenonTranslator(TranslationContainer):
             mythic_type = f"UNKNOWN_RESPONSE: {mythic_action_byte}"
 
         # Agent -> C2
-        logging.info(f"[{mythic_type}] Agent -> C2 : {len(response.Message)} bytes")
-        # logging.info(f"[{mythic_type}] Agent -> C2 : {response.Message} \n\n")
+        logging.info(f"[{mythic_type}] Agent -> C2 : {json.dumps(response.Message, default=str)}")
         
         return response

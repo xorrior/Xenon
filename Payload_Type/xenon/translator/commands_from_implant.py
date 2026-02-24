@@ -180,9 +180,11 @@ def post_response_handler(data):
 
     mythic_json = {
         "action": "get_tasking",
-        "tasking_size": num_of_tasks,
-        "responses": mythic_messages,
+        "tasking_size": -1,
     }
+
+    if mythic_messages:
+        mythic_json["responses"] = mythic_messages
     
     if mythic_delegates:
         mythic_json["delegates"] = mythic_delegates
