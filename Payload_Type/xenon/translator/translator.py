@@ -39,14 +39,29 @@ class XenonTranslator(TranslationContainer):
         logging.info(f"[{mythic_action}] C2 -> Agent : {len(inputMsg.Message)} keys")
         logging.info(f"[{mythic_action}] C2 -> Agent : {json.dumps(inputMsg.Message, default=str)}")
         
-        if mythic_action == "checkin":
-            main_msg = checkin_to_agent_format(inputMsg.Message["id"])
-        
-        elif mythic_action == "get_tasking":
-            main_msg = get_responses_to_agent_format(inputMsg)
-        
-        response.Message = main_msg
-        
+        try:
+            if mythic_action == "checkin":
+                main_msg = checkin_to_agent_format(inputMsg.Message["id"])
+
+            elif mythic_action == "get_tasking":
+                main_msg = get_responses_to_agent_format(inputMsg)
+
+            else:
+                logging.warning(f"[{mythic_action}] Unhandled action type")
+                main_msg = b""
+
+            response.Message = main_msg
+
+            # Log hex dump of binary message being sent to agent
+            if isinstance(main_msg, (bytes, bytearray)):
+                hex_str = main_msg.hex()
+                logging.info(f"[{mythic_action}] C2 -> Agent BINARY ({len(main_msg)} bytes): {hex_str}")
+
+        except Exception as e:
+            logging.error(f"[{mythic_action}] EXCEPTION in translate_to_c2_format: {e}", exc_info=True)
+            response.Success = False
+            response.Error = str(e)
+
         return response
 
 
@@ -57,23 +72,31 @@ class XenonTranslator(TranslationContainer):
         """
         response = TrCustomMessageToMythicC2FormatMessageResponse(Success=True)
         
-        # Agent message (type + buffer)
-        agent_action_msg = inputMsg.Message
-        mythic_action_byte = agent_action_msg[0]
-        mythic_action_data = agent_action_msg[1:]
+        try:
+            # Agent message (type + buffer)
+            agent_action_msg = inputMsg.Message
+            if isinstance(agent_action_msg, (bytes, bytearray)):
+                logging.info(f"[raw] Agent -> C2 BINARY ({len(agent_action_msg)} bytes): {agent_action_msg.hex()}")
+            mythic_action_byte = agent_action_msg[0]
+            mythic_action_data = agent_action_msg[1:]
 
-        if mythic_action_byte == MYTHIC_CHECK_IN:
-            mythic_type = "checkin response"
-            response.Message = checkin_to_mythic_format(mythic_action_data)
-        
-        elif mythic_action_byte == MYTHIC_GET_TASKING:
-            mythic_type = "get_tasking response"
-            response.Message = post_response_handler(mythic_action_data)
-        
-        else:
-            mythic_type = f"UNKNOWN_RESPONSE: {mythic_action_byte}"
+            if mythic_action_byte == MYTHIC_CHECK_IN:
+                mythic_type = "checkin response"
+                response.Message = checkin_to_mythic_format(mythic_action_data)
 
-        # Agent -> C2
-        logging.info(f"[{mythic_type}] Agent -> C2 : {json.dumps(response.Message, default=str)}")
-        
+            elif mythic_action_byte == MYTHIC_GET_TASKING:
+                mythic_type = "get_tasking response"
+                response.Message = post_response_handler(mythic_action_data)
+
+            else:
+                mythic_type = f"UNKNOWN_RESPONSE: {mythic_action_byte}"
+
+            # Agent -> C2
+            logging.info(f"[{mythic_type}] Agent -> C2 : {json.dumps(response.Message, default=str)}")
+
+        except Exception as e:
+            logging.error(f"EXCEPTION in translate_from_c2_format: {e}", exc_info=True)
+            response.Success = False
+            response.Error = str(e)
+
         return response
