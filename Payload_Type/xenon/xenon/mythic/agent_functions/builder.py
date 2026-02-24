@@ -523,8 +523,8 @@ class XenonAgent(PayloadType):
                 turn_lflags = "EXTRA_LFLAGS='-static -Wl,--allow-multiple-definition " \
                     "-L/opt/libdatachannel/lib -L/opt/libnice-mingw64/lib -L/opt/msys2-mingw64/lib -L/opt/openssl-mingw64/lib " \
                     "-ldatachannel -lnice -lusrsctp " \
-                    "-lgio-2.0 -lgobject-2.0 -lglib-2.0 -lintl -lffi -lpcre2-8 -lz -liconv " \
-                    "-lssl -lcrypto -lbcrypt -lcrypt32 -liphlpapi -lws2_32 -lole32 -lshlwapi -ldnsapi -lstdc++ -lpthread'"
+                    "-lgio-2.0 -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lintl -lffi -lpcre2-8 -lz -liconv " \
+                    "-lssl -lcrypto -lssp -lbcrypt -lcrypt32 -liphlpapi -lws2_32 -lole32 -lshlwapi -ldnsapi -luuid -lshell32 -lstdc++ -lpthread'"
                 command += f" {turn_lflags}"
                 # Include paths for libdatachannel, libnice, glib2, and OpenSSL
                 turn_cflags = "'CFLAGS=-Wall -w -s -DRTC_STATIC " \
