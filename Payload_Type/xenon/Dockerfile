@@ -56,11 +56,16 @@ RUN mkdir -p ${MSYS2_PREFIX} /tmp/msys2-pkgs && \
     ls -la ${MSYS2_PREFIX}/lib/pkgconfig/ && \
     rm -rf /tmp/msys2-pkgs
 
-# Step 3: Create meson cross file for mingw-w64
+# Step 3: Create compiler wrappers that inject GLib static defines, then meson cross file
+RUN printf '#!/bin/sh\nexec x86_64-w64-mingw32-gcc -DGLIB_STATIC_COMPILATION -DGOBJECT_STATIC_COMPILATION -DGIO_STATIC_COMPILATION -DGMODULE_STATIC_COMPILATION "$@"\n' \
+    > /usr/local/bin/mingw-gcc-static && chmod +x /usr/local/bin/mingw-gcc-static && \
+    printf '#!/bin/sh\nexec x86_64-w64-mingw32-g++ -DGLIB_STATIC_COMPILATION -DGOBJECT_STATIC_COMPILATION -DGIO_STATIC_COMPILATION -DGMODULE_STATIC_COMPILATION "$@"\n' \
+    > /usr/local/bin/mingw-gpp-static && chmod +x /usr/local/bin/mingw-gpp-static
+
 RUN printf '%s\n' \
     '[binaries]' \
-    "c = 'x86_64-w64-mingw32-gcc'" \
-    "cpp = 'x86_64-w64-mingw32-g++'" \
+    "c = '/usr/local/bin/mingw-gcc-static'" \
+    "cpp = '/usr/local/bin/mingw-gpp-static'" \
     "ar = 'x86_64-w64-mingw32-ar'" \
     "strip = 'x86_64-w64-mingw32-strip'" \
     "windres = 'x86_64-w64-mingw32-windres'" \
@@ -68,6 +73,8 @@ RUN printf '%s\n' \
     '' \
     '[properties]' \
     "pkg_config_libdir = ['${MSYS2_PREFIX}/lib/pkgconfig', '/opt/openssl-mingw64/lib/pkgconfig']" \
+    '' \
+    '[built-in options]' \
     "c_link_args = ['-lcrypt32']" \
     '' \
     '[host_machine]' \
@@ -100,8 +107,8 @@ RUN cd /opt && \
 RUN printf '%s\n' \
     'set(CMAKE_SYSTEM_NAME Windows)' \
     'set(CMAKE_SYSTEM_PROCESSOR x86_64)' \
-    'set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)' \
-    'set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' \
+    'set(CMAKE_C_COMPILER /usr/local/bin/mingw-gcc-static)' \
+    'set(CMAKE_CXX_COMPILER /usr/local/bin/mingw-gpp-static)' \
     'set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' \
     'set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32 /opt/openssl-mingw64 /opt/libnice-mingw64 '"${MSYS2_PREFIX}"')' \
     'set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)' \
